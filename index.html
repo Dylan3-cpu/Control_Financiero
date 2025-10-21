@@ -4,69 +4,127 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Control de Ingresos y Gastos</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
-    <!-- Página de inicio -->
-    <div id="inicio" class="container">
-        <h1>Control Financiero</h1>
-        <p class="subtitle">Gestiona tus ingresos y gastos</p>
-        <div class="button-group">
-            <button onclick="mostrarVista('ingresar')" class="btn btn-primary">Ingresar Datos</button>
-            <button onclick="mostrarVista('ver')" class="btn btn-secondary">Ver Registros</button>
+    <!-- Pantalla de Inicio -->
+    <div id="inicio" class="pantalla activa">
+        <div class="contenedor-inicio">
+            <h1>Control Financiero</h1>
+            <div class="botones-inicio">
+                <button onclick="mostrarPantalla('ingresar')" class="boton-principal">Ingresar Datos</button>
+                <button onclick="mostrarPantalla('registros')" class="boton-secundario">Ver Registros</button>
+            </div>
         </div>
     </div>
 
-    <!-- Vista de ingresar datos -->
-    <div id="ingresar" class="container hidden">
-        <button onclick="mostrarVista('inicio')" class="btn-back">← Volver</button>
-        <h2>Ingresar Datos</h2>
-        
-        <form id="formulario" onsubmit="agregarRegistro(event)">
-            <div class="form-group">
-                <label for="fecha">Fecha</label>
-                <input type="text" id="fecha" placeholder="DD/MM/AAAA" maxlength="10" required>
-            </div>
-
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="ingreso">Ingreso</label>
-                    <input type="number" id="ingreso" placeholder="0.00" step="0.01" min="0" value="0">
+    <!-- Pantalla de Ingresar Datos -->
+    <div id="ingresar" class="pantalla">
+        <div class="contenedor">
+            <button onclick="mostrarPantalla('inicio')" class="boton-volver">← Volver</button>
+            <h2>Ingresar Datos</h2>
+            
+            <div id="mensaje-error" class="mensaje-error oculto"></div>
+            
+            <form id="formulario" onsubmit="agregarRegistro(event)">
+                <div class="campo">
+                    <label>Fecha (DD/MM/AAAA)</label>
+                    <input type="text" id="fecha" placeholder="01/01/2024" maxlength="10">
                 </div>
-                <div class="form-group">
-                    <label for="detalleIngreso">Detalle Ingreso</label>
+
+                <div class="campo">
+                    <label>Ingreso</label>
+                    <input type="number" id="ingreso" placeholder="0.00" step="0.01" min="0">
+                </div>
+
+                <div class="campo">
+                    <label>Detalle Ingreso</label>
                     <input type="text" id="detalleIngreso" placeholder="Descripción del ingreso">
                 </div>
-            </div>
 
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="salida">Salida</label>
-                    <input type="number" id="salida" placeholder="0.00" step="0.01" min="0" value="0">
+                <div class="campo">
+                    <label>Salida</label>
+                    <input type="number" id="salida" placeholder="0.00" step="0.01" min="0">
                 </div>
-                <div class="form-group">
-                    <label for="detalleSalida">Detalle Salida</label>
+
+                <div class="campo">
+                    <label>Detalle Salida</label>
                     <input type="text" id="detalleSalida" placeholder="Descripción de la salida">
                 </div>
-            </div>
 
-            <div class="total-display">
-                <span>Total:</span>
-                <span id="totalActual" class="total-amount">$0.00</span>
-            </div>
+                <div class="campo-total">
+                    <label>Total</label>
+                    <div class="total-display" id="totalDisplay">$0.00</div>
+                </div>
 
-            <button type="submit" class="btn btn-primary btn-full">Añadir Registro</button>
-        </form>
+                <button type="submit" class="boton-principal">Añadir Registro</button>
+            </form>
+        </div>
     </div>
 
-    <!-- Vista de ver registros -->
-    <div id="ver" class="container hidden">
-        <button onclick="mostrarVista('inicio')" class="btn-back">← Volver</button>
-        <h2>Mis Registros</h2>
-        
-        <div id="listaRegistros"></div>
-        <div id="mensajeVacio" class="mensaje-vacio hidden">
-            Aún no se han registrado datos
+    <!-- Pantalla de Ver Registros -->
+    <div id="registros" class="pantalla">
+        <div class="contenedor">
+            <button onclick="mostrarPantalla('inicio')" class="boton-volver">← Volver</button>
+            <h2>Mis Registros</h2>
+
+            <!-- Barra de Búsqueda -->
+            <div class="barra-busqueda">
+                <input type="text" id="busqueda" placeholder="Buscar por descripción..." oninput="aplicarFiltros()">
+            </div>
+
+            <!-- Filtros -->
+            <div class="contenedor-filtros">
+                <div class="filtros-fecha">
+                    <h3>Filtrar por Fecha</h3>
+                    <div class="grupo-filtros">
+                        <div class="filtro-item">
+                            <label>Día</label>
+                            <input type="number" id="filtroDia" placeholder="DD" min="1" max="31" oninput="aplicarFiltros()">
+                        </div>
+                        <div class="filtro-item">
+                            <label>Mes</label>
+                            <input type="number" id="filtroMes" placeholder="MM" min="1" max="12" oninput="aplicarFiltros()">
+                        </div>
+                        <div class="filtro-item">
+                            <label>Año</label>
+                            <input type="number" id="filtroAnio" placeholder="AAAA" min="2000" max="2100" oninput="aplicarFiltros()">
+                        </div>
+                        <button onclick="limpiarFiltros()" class="boton-limpiar">Limpiar Filtros</button>
+                    </div>
+                </div>
+
+                <div class="filtros-tipo">
+                    <h3>Filtrar por Tipo</h3>
+                    <div class="grupo-botones">
+                        <button onclick="filtrarPorTipo('todos')" class="boton-filtro activo" id="btnTodos">Todos</button>
+                        <button onclick="filtrarPorTipo('ingresos')" class="boton-filtro" id="btnIngresos">Solo Ingresos</button>
+                        <button onclick="filtrarPorTipo('salidas')" class="boton-filtro" id="btnSalidas">Solo Salidas</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resumen de Totales -->
+            <div class="resumen-totales">
+                <div class="total-card">
+                    <span class="total-label">Total Ingresos</span>
+                    <span class="total-valor ingreso" id="totalIngresos">$0.00</span>
+                </div>
+                <div class="total-card">
+                    <span class="total-label">Total Salidas</span>
+                    <span class="total-valor salida" id="totalSalidas">$0.00</span>
+                </div>
+                <div class="total-card">
+                    <span class="total-label">Balance Total</span>
+                    <span class="total-valor" id="balanceTotal">$0.00</span>
+                </div>
+            </div>
+
+            <!-- Lista de Registros -->
+            <div id="listaRegistros" class="lista-registros"></div>
+            <div id="mensajeVacio" class="mensaje-vacio oculto">
+                Aún no se han registrado datos
+            </div>
         </div>
     </div>
 
