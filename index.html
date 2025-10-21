@@ -33,16 +33,14 @@
             <form id="formulario" onsubmit="agregarRegistro(event)">
                 <div class="campo">
                     <label>Fecha (DD/MM/AAAA)</label>
-                    <!-- Solo permite números y "/" -->
-                    <input type="text" id="fecha" placeholder="01/01/2024" maxlength="10"
-                           oninput="this.value=this.value.replace(/[^0-9/]/g,'')">
+                    <!-- quitar oninput que rompía el formateo JS -->
+                    <input type="text" id="fecha" placeholder="01/01/2024" maxlength="10">
                 </div>
 
                 <div class="campo">
                     <label>Ingreso</label>
-                    <!-- Solo permite números y decimales -->
-                    <input type="text" id="ingreso" placeholder="0.00"
-                           oninput="this.value=this.value.replace(/[^0-9.]/g,'')">
+                    <!-- quitar oninput para permitir que manejarFormatoNumerico formatee -->
+                    <input type="text" id="ingreso" placeholder="0.00">
                 </div>
 
                 <div class="campo">
@@ -52,9 +50,8 @@
 
                 <div class="campo">
                     <label>Salida</label>
-                    <!-- Solo permite números y decimales -->
-                    <input type="text" id="salida" placeholder="0.00"
-                           oninput="this.value=this.value.replace(/[^0-9.]/g,'')">
+                    <!-- quitar oninput para permitir que manejarFormatoNumerico formatee -->
+                    <input type="text" id="salida" placeholder="0.00">
                 </div>
 
                 <div class="campo">

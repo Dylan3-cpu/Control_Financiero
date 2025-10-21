@@ -100,18 +100,18 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
 }
 
 // =======================================================
-// 🔹 FUNCIÓN: Agregar registro nuevo
+// 🔹 FUNCIÓN: Agregar registro nuevo (permitir sólo ingreso o sólo salida)
 // =======================================================
 function agregarRegistro(e) {
     e.preventDefault();
     const fecha = document.getElementById('fecha').value.trim();
-    const ingreso = document.getElementById('ingreso').value.replace(/[^\d.]/g, '').replace(',', '.');
-    const salida = document.getElementById('salida').value.replace(/[^\d.]/g, '').replace(',', '.');
+    const ingresoRaw = document.getElementById('ingreso').value;
+    const salidaRaw = document.getElementById('salida').value;
     const detalleIngreso = document.getElementById('detalleIngreso').value.trim();
     const detalleSalida = document.getElementById('detalleSalida').value.trim();
 
-    if (!fecha || !ingreso || !salida || !detalleIngreso || !detalleSalida) {
-        mostrarNotificacion('⚠️ Completa todos los campos.', 'error');
+    if (!fecha) {
+        mostrarNotificacion('⚠️ Completa la fecha.', 'error');
         return;
     }
     if (!validarFecha(fecha)) {
@@ -119,10 +119,21 @@ function agregarRegistro(e) {
         return;
     }
 
-    const ingresoNum = parseFloat(ingreso);
-    const salidaNum = parseFloat(salida);
-    if (isNaN(ingresoNum) || isNaN(salidaNum)) {
-        mostrarNotificacion('⚠️ Ingresa valores numéricos válidos.', 'error');
+    const ingresoNum = parseFloat(ingresoRaw.replace(/[^\d.]/g, '').replace(',', '.')) || 0;
+    const salidaNum = parseFloat(salidaRaw.replace(/[^\d.]/g, '').replace(',', '.')) || 0;
+
+    // Debe existir al menos ingreso o salida
+    if (ingresoNum === 0 && salidaNum === 0) {
+        mostrarNotificacion('⚠️ Ingresa un valor en ingreso o en salida.', 'error');
+        return;
+    }
+    // Validar detalles sólo si corresponde
+    if (ingresoNum > 0 && !detalleIngreso) {
+        mostrarNotificacion('⚠️ Agrega detalle para el ingreso.', 'error');
+        return;
+    }
+    if (salidaNum > 0 && !detalleSalida) {
+        mostrarNotificacion('⚠️ Agrega detalle para la salida.', 'error');
         return;
     }
 
@@ -140,6 +151,8 @@ function agregarRegistro(e) {
     document.getElementById('formulario').reset();
     actualizarTotal();
     mostrarNotificacion('✅ Registro guardado exitosamente.', 'exito');
+    // opcional: mostrar la pantalla de registros
+    // mostrarPantalla('registros');
 }
 
 // =======================================================
@@ -185,7 +198,10 @@ function aplicarFiltros() {
 function filtrarPorTipo(tipo) {
     filtroTipo = tipo;
     document.querySelectorAll('.boton-filtro').forEach(b => b.classList.remove('activo'));
-    document.getElementById(`btn${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`).classList.add('activo');
+    // Protección: calcula el id y sólo añade la clase si el elemento existe
+    const idBoton = `btn${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`;
+    const boton = document.getElementById(idBoton);
+    if (boton) boton.classList.add('activo');
     aplicarFiltros();
 }
 
@@ -299,4 +315,24 @@ function eliminarRegistro(id) {
     guardarRegistros();
     mostrarNotificacion('🗑️ Registro eliminado.', 'info');
     aplicarFiltros();
+}
+
+// =======================================================
+// 🔹 FUNCIÓN: Mostrar/ocultar pantallas (navegación)
+// =======================================================
+function mostrarPantalla(nombre) {
+    // Quita la clase activa de todas las pantallas
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    // Activa la pantalla solicitada si existe
+    const destino = document.getElementById(nombre);
+    if (!destino) return;
+    destino.classList.add('activa');
+    // Si se muestra la pantalla de registros, renderiza los registros y totales
+    if (nombre === 'registros') {
+        aplicarFiltros();
+    }
+    // Si se muestra la pantalla de ingresar, actualiza el total en tiempo real
+    if (nombre === 'ingresar') {
+        actualizarTotal();
+    }
 }
