@@ -7,6 +7,9 @@
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
+    <!-- Contenedor general de mensajes tipo banner -->
+    <div id="notificacion" class="notificacion oculto"></div>
+
     <!-- Pantalla de Inicio -->
     <div id="inicio" class="pantalla activa">
         <div class="contenedor-inicio">
@@ -24,17 +27,22 @@
             <button onclick="mostrarPantalla('inicio')" class="boton-volver">← Volver</button>
             <h2>Ingresar Datos</h2>
             
+            <!-- Contenedor de mensajes de error -->
             <div id="mensaje-error" class="mensaje-error oculto"></div>
             
             <form id="formulario" onsubmit="agregarRegistro(event)">
                 <div class="campo">
                     <label>Fecha (DD/MM/AAAA)</label>
-                    <input type="text" id="fecha" placeholder="01/01/2024" maxlength="10">
+                    <!-- Solo permite números y "/" -->
+                    <input type="text" id="fecha" placeholder="01/01/2024" maxlength="10"
+                           oninput="this.value=this.value.replace(/[^0-9/]/g,'')">
                 </div>
 
                 <div class="campo">
                     <label>Ingreso</label>
-                    <input type="number" id="ingreso" placeholder="0.00" step="0.01" min="0">
+                    <!-- Solo permite números y decimales -->
+                    <input type="text" id="ingreso" placeholder="0.00"
+                           oninput="this.value=this.value.replace(/[^0-9.]/g,'')">
                 </div>
 
                 <div class="campo">
@@ -44,7 +52,9 @@
 
                 <div class="campo">
                     <label>Salida</label>
-                    <input type="number" id="salida" placeholder="0.00" step="0.01" min="0">
+                    <!-- Solo permite números y decimales -->
+                    <input type="text" id="salida" placeholder="0.00"
+                           oninput="this.value=this.value.replace(/[^0-9.]/g,'')">
                 </div>
 
                 <div class="campo">

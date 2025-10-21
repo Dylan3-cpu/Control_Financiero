@@ -488,3 +488,56 @@ h3 {
         grid-template-columns: 1fr;
     }
 }
+
+/* ======================================================
+   🎉 ESTILOS NUEVOS PARA NOTIFICACIONES Y MENSAJES
+   ====================================================== */
+
+.notificacion {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    color: white;
+    z-index: 9999;
+    opacity: 0.95;
+    transition: opacity 0.5s ease;
+}
+
+.notificacion.exito { background-color: #4caf50; }
+.notificacion.error { background-color: #f44336; }
+.notificacion.info { background-color: #2196f3; }
+
+.notificacion.oculto {
+    display: none;
+}
+
+/* ======================================================
+   ✨ ANIMACIÓN SUAVE DE LAS NOTIFICACIONES
+   ====================================================== */
+
+/* Define la animación para que el banner "baje" desde arriba */
+@keyframes slideDown {
+    0% {
+        transform: translate(-50%, -50px);
+        opacity: 0;
+    }
+    100% {
+        transform: translate(-50%, 0);
+        opacity: 0.95;
+    }
+}
+
+/* Cuando aparece la notificación */
+.notificacion {
+    animation: slideDown 0.5s ease forwards;
+}
+
+/* Transición de salida suave */
+.notificacion.oculto {
+    opacity: 0;
+    transition: opacity 0.5s ease;
+}
