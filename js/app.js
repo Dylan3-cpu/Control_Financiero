@@ -1,62 +1,87 @@
 // =======================================================
 // 🧭 SISTEMA DE CONTROL FINANCIERO
-// Archivo: app.js
-// Explicado y comentado completamente en español
+// Versión mejorada con formato automático de fecha y COP
 // =======================================================
 
 // VARIABLES GLOBALES -----------------------------------
-let registros = [];        // Almacena todos los registros
-let registroEditando = null;  // Guarda el ID si se está editando
-let filtroTipo = 'todos';  // Filtro actual (todos, ingresos o salidas)
+let registros = [];
+let registroEditando = null;
+let filtroTipo = 'todos';
+
+// Formateador de moneda colombiana 🇨🇴
+const formatoCOP = new Intl.NumberFormat('es-CO', {
+    style: 'currency',
+    currency: 'COP',
+    minimumFractionDigits: 2
+});
 
 // =======================================================
 // 🔹 INICIALIZACIÓN DEL SISTEMA
 // =======================================================
 document.addEventListener('DOMContentLoaded', function() {
-    cargarRegistros();  // Cargar registros guardados del localStorage
-    actualizarTotal();  // Mostrar total inicial
-    
-    // Escuchar cambios en los campos de ingreso/salida para recalcular total
-    document.getElementById('ingreso').addEventListener('input', actualizarTotal);
-    document.getElementById('salida').addEventListener('input', actualizarTotal);
+    cargarRegistros();
+    actualizarTotal();
+
+    // Escuchar cambios de ingreso/salida
+    document.getElementById('ingreso').addEventListener('input', manejarFormatoNumerico);
+    document.getElementById('salida').addEventListener('input', manejarFormatoNumerico);
+    document.getElementById('fecha').addEventListener('input', formatoFechaAutomatica);
 });
 
 // =======================================================
-// 🔹 FUNCIÓN: Mostrar pantalla activa
+// 🔹 FUNCIÓN: Formatear número a pesos colombianos
 // =======================================================
-function mostrarPantalla(pantalla) {
-    const pantallas = document.querySelectorAll('.pantalla');
-    pantallas.forEach(p => p.classList.remove('activa'));
-    document.getElementById(pantalla).classList.add('activa');
-    
-    if (pantalla === 'registros') {
-        mostrarRegistros();
+function formatearCOP(valor) {
+    const numero = parseFloat(valor.replace(/[^0-9.]/g, '')) || 0;
+    return formatoCOP.format(numero);
+}
+
+// =======================================================
+// 🔹 FUNCIÓN: Mantener el formato visual COP en los inputs
+// =======================================================
+function manejarFormatoNumerico(event) {
+    const input = event.target;
+    const valor = input.value.replace(/[^0-9.]/g, '');
+    if (valor) {
+        input.value = formatearCOP(valor);
+    } else {
+        input.value = '';
     }
+    actualizarTotal();
+}
+
+// =======================================================
+// 🔹 FUNCIÓN: Añadir "/" automáticamente en la fecha
+// =======================================================
+function formatoFechaAutomatica(e) {
+    let valor = e.target.value.replace(/[^0-9]/g, ''); // Solo números
+    if (valor.length > 2 && valor.length <= 4) {
+        valor = valor.slice(0, 2) + '/' + valor.slice(2);
+    } else if (valor.length > 4) {
+        valor = valor.slice(0, 2) + '/' + valor.slice(2, 4) + '/' + valor.slice(4, 8);
+    }
+    e.target.value = valor.slice(0, 10);
 }
 
 // =======================================================
 // 🔹 FUNCIÓN: Actualiza el total en tiempo real
 // =======================================================
 function actualizarTotal() {
-    const ingreso = parseFloat(document.getElementById('ingreso').value) || 0;
-    const salida = parseFloat(document.getElementById('salida').value) || 0;
+    const ingreso = parseFloat(document.getElementById('ingreso').value.replace(/[^0-9.]/g, '')) || 0;
+    const salida = parseFloat(document.getElementById('salida').value.replace(/[^0-9.]/g, '')) || 0;
     const total = ingreso - salida;
-    document.getElementById('totalDisplay').textContent = '$' + total.toFixed(2);
+    document.getElementById('totalDisplay').textContent = formatoCOP.format(total);
 }
 
 // =======================================================
-// 🔹 FUNCIÓN: Validar fecha (solo formato DD/MM/AAAA)
+// 🔹 FUNCIÓN: Validar formato correcto de fecha
 // =======================================================
 function validarFecha(fecha) {
     const regex = /^\d{2}\/\d{2}\/\d{4}$/;
     if (!regex.test(fecha)) return false;
-
     const [dia, mes, anio] = fecha.split('/').map(Number);
-    if (dia < 1 || dia > 31 || mes < 1 || mes > 12 || anio < 1900 || anio > 2100) return false;
-
-    // Verifica días válidos por mes
-    const diasPorMes = [31, (anio % 4 === 0 && anio % 100 !== 0) || (anio % 400 === 0) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
-    return dia <= diasPorMes[mes - 1];
+    const diasMes = [31, (anio % 4 === 0 && anio % 100 !== 0) || anio % 400 === 0 ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+    return mes >= 1 && mes <= 12 && dia >= 1 && dia <= diasMes[mes - 1];
 }
 
 // =======================================================
@@ -65,47 +90,38 @@ function validarFecha(fecha) {
 function mostrarNotificacion(mensaje, tipo = 'info') {
     const notificacion = document.getElementById('notificacion');
     notificacion.textContent = mensaje;
-    notificacion.className = `notificacion ${tipo}`; // Tipo puede ser: info, error, exito
+    notificacion.className = `notificacion ${tipo}`;
     notificacion.classList.remove('oculto');
-
     setTimeout(() => notificacion.classList.add('oculto'), 3000);
 }
 
 // =======================================================
-// 🔹 FUNCIÓN: Agregar nuevo registro
+// 🔹 FUNCIÓN: Agregar registro nuevo
 // =======================================================
-function agregarRegistro(event) {
-    event.preventDefault();
-
-    // Obtener valores del formulario
+function agregarRegistro(e) {
+    e.preventDefault();
     const fecha = document.getElementById('fecha').value.trim();
-    const ingreso = document.getElementById('ingreso').value.trim();
+    const ingreso = document.getElementById('ingreso').value.replace(/[^0-9.]/g, '');
+    const salida = document.getElementById('salida').value.replace(/[^0-9.]/g, '');
     const detalleIngreso = document.getElementById('detalleIngreso').value.trim();
-    const salida = document.getElementById('salida').value.trim();
     const detalleSalida = document.getElementById('detalleSalida').value.trim();
 
-    // Validar campos vacíos
-    if (!fecha || !ingreso || !detalleIngreso || !salida || !detalleSalida) {
-        mostrarNotificacion('⚠️ Por favor, completa todos los campos.', 'error');
+    if (!fecha || !ingreso || !salida || !detalleIngreso || !detalleSalida) {
+        mostrarNotificacion('⚠️ Completa todos los campos.', 'error');
         return;
     }
-
-    // Validar fecha
     if (!validarFecha(fecha)) {
-        mostrarNotificacion('❌ Fecha inválida. Usa formato DD/MM/AAAA.', 'error');
+        mostrarNotificacion('❌ Fecha inválida. Usa DD/MM/AAAA.', 'error');
         return;
     }
 
     const ingresoNum = parseFloat(ingreso);
     const salidaNum = parseFloat(salida);
-
-    // Validar números
-    if (isNaN(ingresoNum) || isNaN(salidaNum) || ingresoNum < 0 || salidaNum < 0) {
-        mostrarNotificacion('⚠️ Los valores deben ser números positivos.', 'error');
+    if (isNaN(ingresoNum) || isNaN(salidaNum)) {
+        mostrarNotificacion('⚠️ Ingresa valores numéricos válidos.', 'error');
         return;
     }
 
-    // Crear registro
     const registro = {
         id: Date.now(),
         fecha,
@@ -115,190 +131,152 @@ function agregarRegistro(event) {
         detalleSalida,
         total: ingresoNum - salidaNum
     };
-
     registros.push(registro);
     guardarRegistros();
-
-    // Limpiar formulario
     document.getElementById('formulario').reset();
     actualizarTotal();
-
-    mostrarNotificacion('✅ Registro guardado exitosamente', 'exito');
+    mostrarNotificacion('✅ Registro guardado exitosamente.', 'exito');
 }
 
 // =======================================================
-// 🔹 GUARDAR y CARGAR registros
+// 🔹 LOCAL STORAGE: Guardar y Cargar
 // =======================================================
 function guardarRegistros() {
     localStorage.setItem('registros', JSON.stringify(registros));
 }
-
 function cargarRegistros() {
-    const guardados = localStorage.getItem('registros');
-    if (guardados) registros = JSON.parse(guardados);
+    const data = localStorage.getItem('registros');
+    if (data) registros = JSON.parse(data);
 }
 
 // =======================================================
-// 🔹 MOSTRAR REGISTROS y FILTROS
+// 🔹 FILTROS Y VISUALIZACIÓN
 // =======================================================
-function mostrarRegistros() {
-    aplicarFiltros();
-}
+function mostrarRegistros() { aplicarFiltros(); }
 
-// Aplica filtros (por texto, fecha o tipo)
 function aplicarFiltros() {
     const busqueda = document.getElementById('busqueda').value.toLowerCase();
-    const filtroDia = document.getElementById('filtroDia').value;
-    const filtroMes = document.getElementById('filtroMes').value;
-    const filtroAnio = document.getElementById('filtroAnio').value;
-
+    const dia = document.getElementById('filtroDia').value;
+    const mes = document.getElementById('filtroMes').value;
+    const anio = document.getElementById('filtroAnio').value;
     let filtrados = [...registros];
 
-    // Filtro por texto
-    if (busqueda) {
-        filtrados = filtrados.filter(r =>
-            r.detalleIngreso.toLowerCase().includes(busqueda) ||
-            r.detalleSalida.toLowerCase().includes(busqueda)
-        );
-    }
-
-    // Filtro por fecha
-    if (filtroDia || filtroMes || filtroAnio) {
+    if (busqueda) filtrados = filtrados.filter(r => r.detalleIngreso.toLowerCase().includes(busqueda) || r.detalleSalida.toLowerCase().includes(busqueda));
+    if (dia || mes || anio) {
         filtrados = filtrados.filter(r => {
-            const [dia, mes, anio] = r.fecha.split('/');
-            return (!filtroDia || dia === filtroDia.padStart(2, '0')) &&
-                   (!filtroMes || mes === filtroMes.padStart(2, '0')) &&
-                   (!filtroAnio || anio === filtroAnio);
+            const [d, m, a] = r.fecha.split('/');
+            return (!dia || d === dia.padStart(2, '0')) && (!mes || m === mes.padStart(2, '0')) && (!anio || a === anio);
         });
     }
-
-    // Filtro por tipo
     if (filtroTipo === 'ingresos') filtrados = filtrados.filter(r => r.ingreso > 0);
     if (filtroTipo === 'salidas') filtrados = filtrados.filter(r => r.salida > 0);
-
     renderizarRegistros(filtrados);
     calcularTotales(filtrados);
 }
 
-// Filtrar por tipo
 function filtrarPorTipo(tipo) {
     filtroTipo = tipo;
-    document.querySelectorAll('.boton-filtro').forEach(btn => btn.classList.remove('activo'));
+    document.querySelectorAll('.boton-filtro').forEach(b => b.classList.remove('activo'));
     document.getElementById(`btn${tipo.charAt(0).toUpperCase() + tipo.slice(1)}`).classList.add('activo');
     aplicarFiltros();
 }
 
-// Limpia todos los filtros
 function limpiarFiltros() {
     document.getElementById('busqueda').value = '';
     document.getElementById('filtroDia').value = '';
     document.getElementById('filtroMes').value = '';
     document.getElementById('filtroAnio').value = '';
     filtroTipo = 'todos';
-    document.querySelectorAll('.boton-filtro').forEach(btn => btn.classList.remove('activo'));
+    document.querySelectorAll('.boton-filtro').forEach(b => b.classList.remove('activo'));
     document.getElementById('btnTodos').classList.add('activo');
     aplicarFiltros();
 }
 
 // =======================================================
-// 🔹 Calcular totales generales
+// 🔹 CÁLCULO DE TOTALES Y RENDERIZACIÓN
 // =======================================================
 function calcularTotales(filtrados) {
-    let totalIngresos = 0, totalSalidas = 0;
+    let ingresos = 0, salidas = 0;
     filtrados.forEach(r => {
-        totalIngresos += r.ingreso;
-        totalSalidas += r.salida;
+        ingresos += r.ingreso;
+        salidas += r.salida;
     });
-
-    document.getElementById('totalIngresos').textContent = '$' + totalIngresos.toFixed(2);
-    document.getElementById('totalSalidas').textContent = '$' + totalSalidas.toFixed(2);
-    document.getElementById('balanceTotal').textContent = '$' + (totalIngresos - totalSalidas).toFixed(2);
+    document.getElementById('totalIngresos').textContent = formatoCOP.format(ingresos);
+    document.getElementById('totalSalidas').textContent = formatoCOP.format(salidas);
+    document.getElementById('balanceTotal').textContent = formatoCOP.format(ingresos - salidas);
 }
 
-// =======================================================
-// 🔹 Renderizar registros en pantalla
-// =======================================================
 function renderizarRegistros(filtrados) {
     const lista = document.getElementById('listaRegistros');
     const vacio = document.getElementById('mensajeVacio');
-
     if (filtrados.length === 0) {
         lista.innerHTML = '';
         vacio.classList.remove('oculto');
         return;
     }
-
     vacio.classList.add('oculto');
-    lista.innerHTML = filtrados.map(reg => `
-        <div class="registro" id="registro-${reg.id}">
+    lista.innerHTML = filtrados.map(r => `
+        <div class="registro" id="registro-${r.id}">
             <div class="registro-header">
-                <div class="registro-fecha">${reg.fecha}</div>
+                <div class="registro-fecha">${r.fecha}</div>
                 <div class="registro-acciones">
-                    <button class="boton-editar" onclick="editarRegistro(${reg.id})">Editar</button>
-                    <button class="boton-eliminar" onclick="eliminarRegistro(${reg.id})">Eliminar</button>
+                    <button class="boton-editar" onclick="editarRegistro(${r.id})">Editar</button>
+                    <button class="boton-eliminar" onclick="eliminarRegistro(${r.id})">Eliminar</button>
                 </div>
             </div>
             <div class="registro-detalles">
-                <div><b>Ingreso:</b> $${reg.ingreso.toFixed(2)}</div>
-                <div><b>Detalle Ingreso:</b> ${reg.detalleIngreso}</div>
-                <div><b>Salida:</b> $${reg.salida.toFixed(2)}</div>
-                <div><b>Detalle Salida:</b> ${reg.detalleSalida}</div>
-                <div><b>Total:</b> $${reg.total.toFixed(2)}</div>
+                <div><b>Ingreso:</b> ${formatoCOP.format(r.ingreso)}</div>
+                <div><b>Detalle Ingreso:</b> ${r.detalleIngreso}</div>
+                <div><b>Salida:</b> ${formatoCOP.format(r.salida)}</div>
+                <div><b>Detalle Salida:</b> ${r.detalleSalida}</div>
+                <div><b>Total:</b> ${formatoCOP.format(r.total)}</div>
             </div>
         </div>
     `).join('');
 }
 
 // =======================================================
-// 🔹 Editar, Guardar y Eliminar Registros
+// 🔹 EDICIÓN Y ELIMINACIÓN DE REGISTROS
 // =======================================================
 function editarRegistro(id) {
-    const reg = registros.find(r => r.id === id);
-    if (!reg) return;
-
+    const r = registros.find(x => x.id === id);
+    if (!r) return;
     const elem = document.getElementById(`registro-${id}`);
     elem.innerHTML = `
         <div class="registro-header">
-            <div class="registro-fecha">${reg.fecha}</div>
+            <div class="registro-fecha">${r.fecha}</div>
             <div class="registro-acciones">
                 <button class="boton-guardar" onclick="guardarEdicion(${id})">Guardar</button>
                 <button class="boton-cancelar" onclick="aplicarFiltros()">Cancelar</button>
             </div>
         </div>
         <div class="registro-detalles registro-editar">
-            <input type="text" id="edit-fecha-${id}" value="${reg.fecha}" maxlength="10" oninput="this.value=this.value.replace(/[^0-9/]/g,'')">
-            <input type="text" id="edit-ingreso-${id}" value="${reg.ingreso}" oninput="this.value=this.value.replace(/[^0-9.]/g,'')">
-            <input type="text" id="edit-detalleIngreso-${id}" value="${reg.detalleIngreso}">
-            <input type="text" id="edit-salida-${id}" value="${reg.salida}" oninput="this.value=this.value.replace(/[^0-9.]/g,'')">
-            <input type="text" id="edit-detalleSalida-${id}" value="${reg.detalleSalida}">
-        </div>
-    `;
+            <input type="text" id="edit-fecha-${id}" value="${r.fecha}" maxlength="10" oninput="formatoFechaAutomatica(event)">
+            <input type="text" id="edit-ingreso-${id}" value="${formatoCOP.format(r.ingreso)}" oninput="manejarFormatoNumerico(event)">
+            <input type="text" id="edit-detalleIngreso-${id}" value="${r.detalleIngreso}">
+            <input type="text" id="edit-salida-${id}" value="${formatoCOP.format(r.salida)}" oninput="manejarFormatoNumerico(event)">
+            <input type="text" id="edit-detalleSalida-${id}" value="${r.detalleSalida}">
+        </div>`;
 }
 
 function guardarEdicion(id) {
-    const fecha = document.getElementById(`edit-fecha-${id}`).value.trim();
-    const ingreso = parseFloat(document.getElementById(`edit-ingreso-${id}`).value.trim());
-    const salida = parseFloat(document.getElementById(`edit-salida-${id}`).value.trim());
-    const detalleIngreso = document.getElementById(`edit-detalleIngreso-${id}`).value.trim();
-    const detalleSalida = document.getElementById(`edit-detalleSalida-${id}`).value.trim();
-
-    if (!fecha || isNaN(ingreso) || isNaN(salida)) {
-        mostrarNotificacion('⚠️ Verifica los datos antes de guardar.', 'error');
-        return;
-    }
-    if (!validarFecha(fecha)) {
+    const f = document.getElementById(`edit-fecha-${id}`).value.trim();
+    const i = parseFloat(document.getElementById(`edit-ingreso-${id}`).value.replace(/[^0-9.]/g, '')) || 0;
+    const s = parseFloat(document.getElementById(`edit-salida-${id}`).value.replace(/[^0-9.]/g, '')) || 0;
+    const dI = document.getElementById(`edit-detalleIngreso-${id}`).value.trim();
+    const dS = document.getElementById(`edit-detalleSalida-${id}`).value.trim();
+    if (!validarFecha(f)) {
         mostrarNotificacion('❌ Fecha inválida.', 'error');
         return;
     }
-
-    const reg = registros.find(r => r.id === id);
-    if (reg) {
-        reg.fecha = fecha;
-        reg.ingreso = ingreso;
-        reg.detalleIngreso = detalleIngreso;
-        reg.salida = salida;
-        reg.detalleSalida = detalleSalida;
-        reg.total = ingreso - salida;
+    const r = registros.find(x => x.id === id);
+    if (r) {
+        r.fecha = f;
+        r.ingreso = i;
+        r.detalleIngreso = dI;
+        r.salida = s;
+        r.detalleSalida = dS;
+        r.total = i - s;
         guardarRegistros();
         mostrarNotificacion('✅ Cambios guardados.', 'exito');
         aplicarFiltros();
