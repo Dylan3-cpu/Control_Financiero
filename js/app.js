@@ -23,8 +23,17 @@ document.addEventListener('DOMContentLoaded', function() {
     actualizarTotal();
 
     // Escuchar cambios de ingreso/salida
-    document.getElementById('ingreso').addEventListener('input', manejarFormatoNumerico);
-    document.getElementById('salida').addEventListener('input', manejarFormatoNumerico);
+    const ingresoElem = document.getElementById('ingreso');
+    const salidaElem = document.getElementById('salida');
+    // Al entrar al campo mostramos valor crudo para editar
+    ingresoElem.addEventListener('focus', quitarFormatoNumerico);
+    salidaElem.addEventListener('focus', quitarFormatoNumerico);
+    // Al salir del campo aplicamos formato COP
+    ingresoElem.addEventListener('blur', aplicarFormatoNumerico);
+    salidaElem.addEventListener('blur', aplicarFormatoNumerico);
+    // Mientras escribe actualizar total con el valor crudo
+    ingresoElem.addEventListener('input', actualizarTotal);
+    salidaElem.addEventListener('input', actualizarTotal);
 
     // Formato automático de fecha
     document.getElementById('fecha').addEventListener('input', formatoFechaAutomatica);
@@ -40,17 +49,28 @@ function formatearCOP(valor) {
 }
 
 // =======================================================
-// 🔹 FUNCIÓN: Mantener formato COP en los inputs
+// 🔹 FUNCIÓN: Mostrar valor crudo al editar (focus)
 // =======================================================
-function manejarFormatoNumerico(event) {
+function quitarFormatoNumerico(event) {
     const input = event.target;
-    const limpio = input.value.replace(/[^\d.]/g, '').replace(',', '.'); // Limpiar caracteres
+    // Extrae sólo números y punto decimal
+    const crudo = input.value.replace(/[^\d.]/g, '').replace(',', '.');
+    input.value = crudo || '';
+}
+
+// =======================================================
+// 🔹 FUNCIÓN: Aplicar formato COP al perder foco (blur)
+// =======================================================
+function aplicarFormatoNumerico(event) {
+    const input = event.target;
+    const limpio = input.value.replace(/[^\d.]/g, '').replace(',', '.');
     if (limpio) {
         const numero = parseFloat(limpio) || 0;
         input.value = formatoCOP.format(numero);
     } else {
         input.value = '';
     }
+    // Actualiza total por si el usuario salió del campo
     actualizarTotal();
 }
 
@@ -279,9 +299,9 @@ function editarRegistro(id) {
         </div>
         <div class="registro-detalles registro-editar">
             <input type="text" id="edit-fecha-${id}" value="${r.fecha}" maxlength="10" oninput="formatoFechaAutomatica(event)">
-            <input type="text" id="edit-ingreso-${id}" value="${formatoCOP.format(r.ingreso)}" oninput="manejarFormatoNumerico(event)">
+            <input type="text" id="edit-ingreso-${id}" value="${formatoCOP.format(r.ingreso)}" onfocus="quitarFormatoNumerico(event)" onblur="aplicarFormatoNumerico(event)">
             <input type="text" id="edit-detalleIngreso-${id}" value="${r.detalleIngreso}">
-            <input type="text" id="edit-salida-${id}" value="${formatoCOP.format(r.salida)}" oninput="manejarFormatoNumerico(event)">
+            <input type="text" id="edit-salida-${id}" value="${formatoCOP.format(r.salida)}" onfocus="quitarFormatoNumerico(event)" onblur="aplicarFormatoNumerico(event)">
             <input type="text" id="edit-detalleSalida-${id}" value="${r.detalleSalida}">
         </div>`;
 }
