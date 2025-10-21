@@ -1,6 +1,6 @@
 // =======================================================
 // 🧭 SISTEMA DE CONTROL FINANCIERO
-// Versión mejorada con formato automático de fecha y COP
+// Versión estable con formato COP y fecha automática
 // =======================================================
 
 // VARIABLES GLOBALES -----------------------------------
@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Escuchar cambios de ingreso/salida
     document.getElementById('ingreso').addEventListener('input', manejarFormatoNumerico);
     document.getElementById('salida').addEventListener('input', manejarFormatoNumerico);
+
+    // Formato automático de fecha
     document.getElementById('fecha').addEventListener('input', formatoFechaAutomatica);
 });
 
@@ -32,18 +34,20 @@ document.addEventListener('DOMContentLoaded', function() {
 // 🔹 FUNCIÓN: Formatear número a pesos colombianos
 // =======================================================
 function formatearCOP(valor) {
-    const numero = parseFloat(valor.replace(/[^0-9.]/g, '')) || 0;
+    // Elimina cualquier carácter que no sea número o punto
+    const numero = parseFloat(valor.replace(/[^\d.]/g, '').replace(',', '.')) || 0;
     return formatoCOP.format(numero);
 }
 
 // =======================================================
-// 🔹 FUNCIÓN: Mantener el formato visual COP en los inputs
+// 🔹 FUNCIÓN: Mantener formato COP en los inputs
 // =======================================================
 function manejarFormatoNumerico(event) {
     const input = event.target;
-    const valor = input.value.replace(/[^0-9.]/g, '');
-    if (valor) {
-        input.value = formatearCOP(valor);
+    const limpio = input.value.replace(/[^\d.]/g, '').replace(',', '.'); // Limpiar caracteres
+    if (limpio) {
+        const numero = parseFloat(limpio) || 0;
+        input.value = formatoCOP.format(numero);
     } else {
         input.value = '';
     }
@@ -67,8 +71,8 @@ function formatoFechaAutomatica(e) {
 // 🔹 FUNCIÓN: Actualiza el total en tiempo real
 // =======================================================
 function actualizarTotal() {
-    const ingreso = parseFloat(document.getElementById('ingreso').value.replace(/[^0-9.]/g, '')) || 0;
-    const salida = parseFloat(document.getElementById('salida').value.replace(/[^0-9.]/g, '')) || 0;
+    const ingreso = parseFloat(document.getElementById('ingreso').value.replace(/[^\d.]/g, '').replace(',', '.')) || 0;
+    const salida = parseFloat(document.getElementById('salida').value.replace(/[^\d.]/g, '').replace(',', '.')) || 0;
     const total = ingreso - salida;
     document.getElementById('totalDisplay').textContent = formatoCOP.format(total);
 }
@@ -101,8 +105,8 @@ function mostrarNotificacion(mensaje, tipo = 'info') {
 function agregarRegistro(e) {
     e.preventDefault();
     const fecha = document.getElementById('fecha').value.trim();
-    const ingreso = document.getElementById('ingreso').value.replace(/[^0-9.]/g, '');
-    const salida = document.getElementById('salida').value.replace(/[^0-9.]/g, '');
+    const ingreso = document.getElementById('ingreso').value.replace(/[^\d.]/g, '').replace(',', '.');
+    const salida = document.getElementById('salida').value.replace(/[^\d.]/g, '').replace(',', '.');
     const detalleIngreso = document.getElementById('detalleIngreso').value.trim();
     const detalleSalida = document.getElementById('detalleSalida').value.trim();
 
@@ -139,7 +143,7 @@ function agregarRegistro(e) {
 }
 
 // =======================================================
-// 🔹 LOCAL STORAGE: Guardar y Cargar
+// 🔹 GUARDAR y CARGAR registros
 // =======================================================
 function guardarRegistros() {
     localStorage.setItem('registros', JSON.stringify(registros));
@@ -150,7 +154,7 @@ function cargarRegistros() {
 }
 
 // =======================================================
-// 🔹 FILTROS Y VISUALIZACIÓN
+// 🔹 MOSTRAR Y FILTRAR REGISTROS
 // =======================================================
 function mostrarRegistros() { aplicarFiltros(); }
 
@@ -161,15 +165,19 @@ function aplicarFiltros() {
     const anio = document.getElementById('filtroAnio').value;
     let filtrados = [...registros];
 
-    if (busqueda) filtrados = filtrados.filter(r => r.detalleIngreso.toLowerCase().includes(busqueda) || r.detalleSalida.toLowerCase().includes(busqueda));
+    if (busqueda)
+        filtrados = filtrados.filter(r => r.detalleIngreso.toLowerCase().includes(busqueda) || r.detalleSalida.toLowerCase().includes(busqueda));
+
     if (dia || mes || anio) {
         filtrados = filtrados.filter(r => {
             const [d, m, a] = r.fecha.split('/');
             return (!dia || d === dia.padStart(2, '0')) && (!mes || m === mes.padStart(2, '0')) && (!anio || a === anio);
         });
     }
+
     if (filtroTipo === 'ingresos') filtrados = filtrados.filter(r => r.ingreso > 0);
     if (filtroTipo === 'salidas') filtrados = filtrados.filter(r => r.salida > 0);
+
     renderizarRegistros(filtrados);
     calcularTotales(filtrados);
 }
@@ -193,7 +201,7 @@ function limpiarFiltros() {
 }
 
 // =======================================================
-// 🔹 CÁLCULO DE TOTALES Y RENDERIZACIÓN
+// 🔹 CALCULAR TOTALES
 // =======================================================
 function calcularTotales(filtrados) {
     let ingresos = 0, salidas = 0;
@@ -206,6 +214,9 @@ function calcularTotales(filtrados) {
     document.getElementById('balanceTotal').textContent = formatoCOP.format(ingresos - salidas);
 }
 
+// =======================================================
+// 🔹 MOSTRAR REGISTROS EN PANTALLA
+// =======================================================
 function renderizarRegistros(filtrados) {
     const lista = document.getElementById('listaRegistros');
     const vacio = document.getElementById('mensajeVacio');
@@ -236,7 +247,7 @@ function renderizarRegistros(filtrados) {
 }
 
 // =======================================================
-// 🔹 EDICIÓN Y ELIMINACIÓN DE REGISTROS
+// 🔹 EDITAR Y ELIMINAR REGISTROS
 // =======================================================
 function editarRegistro(id) {
     const r = registros.find(x => x.id === id);
@@ -261,8 +272,8 @@ function editarRegistro(id) {
 
 function guardarEdicion(id) {
     const f = document.getElementById(`edit-fecha-${id}`).value.trim();
-    const i = parseFloat(document.getElementById(`edit-ingreso-${id}`).value.replace(/[^0-9.]/g, '')) || 0;
-    const s = parseFloat(document.getElementById(`edit-salida-${id}`).value.replace(/[^0-9.]/g, '')) || 0;
+    const i = parseFloat(document.getElementById(`edit-ingreso-${id}`).value.replace(/[^\d.]/g, '').replace(',', '.')) || 0;
+    const s = parseFloat(document.getElementById(`edit-salida-${id}`).value.replace(/[^\d.]/g, '').replace(',', '.')) || 0;
     const dI = document.getElementById(`edit-detalleIngreso-${id}`).value.trim();
     const dS = document.getElementById(`edit-detalleSalida-${id}`).value.trim();
     if (!validarFecha(f)) {
