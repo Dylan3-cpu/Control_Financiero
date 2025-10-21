@@ -256,6 +256,22 @@ h3 {
     display: flex;
     gap: 0.5rem;
     flex-wrap: wrap;
+    align-items: center; /* ajuste para nuevos botones */
+}
+
+/* Estilos específicos para los botones de export/import y agrupar (heredan .boton-filtro) */
+#btnExportCSV, #btnImportCSV, #btnAgruparMes {
+    background-color: #fff;
+    color: #666;
+    border: 2px dashed #e0e0e0;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+#btnExportCSV:hover, #btnImportCSV:hover, #btnAgruparMes:hover {
+    border-color: #ff6b35;
+    color: #ff6b35;
 }
 
 .boton-filtro {

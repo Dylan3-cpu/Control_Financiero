@@ -107,6 +107,12 @@
                         <button onclick="filtrarPorTipo('todos')" class="boton-filtro activo" id="btnTodos">Todos</button>
                         <button onclick="filtrarPorTipo('ingresos')" class="boton-filtro" id="btnIngresos">Solo Ingresos</button>
                         <button onclick="filtrarPorTipo('salidas')" class="boton-filtro" id="btnSalidas">Solo Salidas</button>
+
+                        <!-- NUEVOS: Agrupar por mes, Export/Import CSV -->
+                        <button onclick="toggleAgruparPorMes()" class="boton-filtro" id="btnAgruparMes" title="Agrupar registros por mes">Agrupar por mes</button>
+                        <button onclick="exportCSV()" class="boton-filtro" id="btnExportCSV" title="Exportar todos los registros a CSV">Exportar CSV</button>
+                        <button onclick="triggerImportCSV()" class="boton-filtro" id="btnImportCSV" title="Importar registros desde CSV">Importar CSV</button>
+                        <input type="file" id="fileImportCSV" accept=".csv" style="display:none">
                     </div>
                 </div>
             </div>
